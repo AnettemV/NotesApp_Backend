@@ -14,55 +14,39 @@ app.post("/resumir", async (req, res) => {
   try {
     const { texto } = req.body;
 
-    if (!texto || texto.trim() === "") {
-      return res.json({
-        resumen: "No hay texto para resumir"
-      });
-    }
-
-    try {
-      const respuesta = await fetch("https://api.openai.com/v1/chat/completions", {
+    const respuesta = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
+          contents: [
             {
-              role: "user",
-              content: `Resume este texto en pocas palabras: ${texto}`
-            }
-          ]
-        })
-      });
-
-      const data = await respuesta.json();
-
-      if (data.choices && data.choices.length > 0) {
-        return res.json({
-          resumen: data.choices[0].message.content
-        });
+              parts: [
+                {
+                  text: `Resume este texto de forma corta: ${texto}`,
+                },
+              ],
+            },
+          ],
+        }),
       }
+    );
 
-      throw new Error("OpenAI fallo");
+    const data = await respuesta.json();
 
-    } catch (openaiError) {
+    const resumen =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No se pudo generar resumen";
 
-      const resumenBasico = texto
-        .split(" ")
-        .slice(0, 15)
-        .join(" ");
-
-      return res.json({
-        resumen: resumenBasico + "..."
-      });
-    }
-
+    res.json({
+      resumen: resumen,
+    });
   } catch (error) {
-    return res.json({
-      resumen: "Error al resumir"
+    res.status(500).json({
+      resumen: "Error del servidor",
     });
   }
 });
