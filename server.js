@@ -6,16 +6,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Ruta de prueba
 app.get("/", (req, res) => {
   res.send("API funcionando");
 });
 
+// Ruta para resumir
 app.post("/resumir", async (req, res) => {
   try {
     const { texto } = req.body;
 
+    if (!texto) {
+      return res.status(400).json({
+        resumen: "Falta el texto",
+      });
+    }
+
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -37,7 +45,7 @@ app.post("/resumir", async (req, res) => {
 
     const data = await response.json();
 
-    console.log(data);
+    console.log("Respuesta Gemini:", data);
 
     const resumen =
       data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -53,7 +61,7 @@ app.post("/resumir", async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
+    console.log("Error:", error);
     res.status(500).json({
       resumen: "Error del servidor",
     });
