@@ -14,8 +14,8 @@ app.post("/resumir", async (req, res) => {
   try {
     const { texto } = req.body;
 
-    const respuesta = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -26,7 +26,7 @@ app.post("/resumir", async (req, res) => {
             {
               parts: [
                 {
-                  text: `Resume este texto de forma corta: ${texto}`,
+                  text: `Resume este texto en pocas palabras: ${texto}`,
                 },
               ],
             },
@@ -35,16 +35,25 @@ app.post("/resumir", async (req, res) => {
       }
     );
 
-    const data = await respuesta.json();
+    const data = await response.json();
+
+    console.log(data);
 
     const resumen =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No se pudo generar resumen";
+      data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!resumen) {
+      return res.json({
+        resumen: "No se pudo generar resumen",
+      });
+    }
 
     res.json({
       resumen: resumen,
     });
+
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       resumen: "Error del servidor",
     });
